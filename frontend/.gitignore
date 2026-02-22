@@ -1,4 +1,3 @@
-
 # Logs
 logs
 *.log
@@ -30,12 +29,3 @@ backend/models/*.h5
 backend/models/*.pt
 backend/models/*.pth
 backend/uploads/
-=======
-venv/
-__pycache__/
-*.pyc
-static/uploads/*
-backend/dataset/*
-models/*
-
-.env
