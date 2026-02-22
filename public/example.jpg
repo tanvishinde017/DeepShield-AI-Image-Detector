@@ -1,0 +1,50 @@
+import exampleImage from "../assets/example.jpg";
+
+export default function ExampleSection() {
+  const examples = [
+    { id: 1, result: "Real", confidence: "97%" },
+    { id: 2, result: "Fake", confidence: "92%" },
+    { id: 3, result: "Real", confidence: "95%" },
+  ];
+
+  return (
+    <section style={{ padding: "100px 0" }}>
+      <div className="container">
+        <h2 style={{ textAlign: "center", marginBottom: "40px" }}>
+          Example Deepfake Detection
+        </h2>
+
+        <div style={{
+          display: "flex",
+          gap: "40px",
+          justifyContent: "center",
+          flexWrap: "wrap"
+        }}>
+          {examples.map((example) => (
+            <div key={example.id} className="example-card">
+              <img
+                src={exampleImage}
+                alt="example"
+                style={{
+                  width: "100%",
+                  height: "250px",
+                  objectFit: "cover",
+                  borderRadius: "15px",
+                  marginBottom: "20px",
+                }}
+              />
+
+              <h3 style={{
+                color: example.result === "Fake" ? "#ff003c" : "#00ff88"
+              }}>
+                Result: {example.result}
+              </h3>
+
+              <p>Confidence: {example.confidence}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
