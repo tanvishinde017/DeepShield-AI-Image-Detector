@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import axios from "axios";
 
 export default function AnalyzeImage() {
@@ -7,24 +7,50 @@ export default function AnalyzeImage() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [dragActive, setDragActive] = useState(false);
 
-  const handleFileChange = (e) => {
-    const selected = e.target.files[0];
+  const inputRef = useRef();
+
+  // ================= FILE SELECT =================
+  const handleFile = (selected) => {
     if (!selected) return;
-
+    if (!selected.type.startsWith("image/")) {
+      alert("Please upload a valid image file.");
+      return;
+    }
     setFile(selected);
     setPreview(URL.createObjectURL(selected));
     setResult(null);
   };
 
+  const handleFileChange = (e) => handleFile(e.target.files[0]);
+
+  // ================= DRAG =================
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setDragActive(true);
+  };
+  const handleDragLeave = () => setDragActive(false);
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragActive(false);
+    handleFile(e.dataTransfer.files[0]);
+  };
+
+  // ================= ANALYZE =================
   const handleSubmit = async () => {
-    if (!file) return alert("Please upload an image first.");
+    if (!file) return alert("Upload an image first.");
 
     const formData = new FormData();
     formData.append("file", file);
 
     setLoading(true);
-    setProgress(20);
+    setProgress(0);
+    setResult(null);
+
+    const interval = setInterval(() => {
+      setProgress((prev) => (prev < 90 ? prev + 5 : prev));
+    }, 300);
 
     try {
       const response = await axios.post(
@@ -32,184 +58,184 @@ export default function AnalyzeImage() {
         formData
       );
 
+      clearInterval(interval);
       setProgress(100);
       setResult(response.data);
     } catch (err) {
+      clearInterval(interval);
       alert("Error analyzing image.");
     }
 
     setLoading(false);
   };
 
+  const resetAll = () => {
+    setFile(null);
+    setPreview(null);
+    setResult(null);
+    setProgress(0);
+  };
+
+  const downloadReport = () => {
+    if (!result) return;
+
+    const content = `
+DeepShield AI Analysis Report
+---------------------------------------
+File Name: ${file.name}
+Result: ${result.label}
+Confidence: ${result.confidence_percent}%
+Raw Score: ${result.raw_score}
+Threshold Used: ${result.threshold_used}
+Inference Time: ${result.inference_time_ms} ms
+
+Reason:
+${result.reason}
+
+Generated at: ${new Date().toLocaleString()}
+    `;
+
+    const blob = new Blob([content], { type: "text/plain" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "DeepShield_Report.txt";
+    link.click();
+  };
+
   const isAI = result?.label === "AI Generated";
 
+  // Circular meter calculations
+  const radius = 70;
+  const circumference = 2 * Math.PI * radius;
+  const offset =
+    result ? circumference - (result.confidence_percent / 100) * circumference : 0;
+
   return (
-    <section
-      style={{
-        textAlign: "center",
-        padding: "60px 20px",
-        minHeight: "100vh",
-        background: "#0f172a",
-        color: "white",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: "700px",
-          margin: "auto",
-          background: "#1e293b",
-          padding: "40px",
-          borderRadius: "16px",
-          boxShadow: "0 0 40px rgba(0,0,0,0.6)",
-        }}
-      >
-        <h1 style={{ fontSize: "28px", marginBottom: "15px" }}>
-          🔍 DeepShield AI Image Detector
-        </h1>
+    <section className="analyze-section">
+      <div className="analyze-card">
 
-        <p style={{ opacity: 0.7, marginBottom: "30px" }}>
-          Upload an image to analyze synthetic artifacts, GAN patterns,
-          pixel distributions and authenticity signals.
-        </p>
+        <h1 className="analyze-title">🔍 DeepShield Image Analysis</h1>
 
-        {/* Upload Button */}
-        <label
+        {/* Drag Area */}
+        <div
+          onClick={() => inputRef.current.click()}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
           style={{
-            background: "#2563eb",
-            padding: "12px 20px",
-            borderRadius: "8px",
+            border: dragActive
+              ? "2px solid #00ff88"
+              : "2px dashed rgba(255,255,255,0.3)",
+            borderRadius: "15px",
+            padding: "40px",
             cursor: "pointer",
-            display: "inline-block",
+            marginBottom: "20px",
           }}
         >
-          📤 Upload Image
+          <p>{file ? "Change Image" : "Drag & Drop Image or Click"}</p>
+
           <input
+            ref={inputRef}
             type="file"
             accept="image/*"
             onChange={handleFileChange}
-            style={{ display: "none" }}
+            hidden
           />
-        </label>
+        </div>
 
-        {/* Image Preview */}
+        {/* Preview with Scan Animation */}
         {preview && (
-          <div style={{ marginTop: "30px" }}>
-            <img
-              src={preview}
-              alt="preview"
-              style={{
-                maxWidth: "100%",
-                borderRadius: "12px",
-                boxShadow: "0 0 20px rgba(0,0,0,0.5)",
-              }}
-            />
+          <div style={{ position: "relative", textAlign: "center" }}>
+            <img src={preview} alt="preview" className="preview-img" />
+
+            {loading && <div className="scan-line"></div>}
           </div>
         )}
 
         {/* Analyze Button */}
-        <button
-          onClick={handleSubmit}
-          style={{
-            marginTop: "30px",
-            padding: "12px 30px",
-            borderRadius: "8px",
-            border: "none",
-            background: "#14b8a6",
-            color: "white",
-            cursor: "pointer",
-            fontWeight: "bold",
-          }}
-        >
-          🚀 Analyze Image
-        </button>
+        {file && !loading && (
+          <button className="primary-btn" onClick={handleSubmit}>
+            🚀 Start AI Analysis
+          </button>
+        )}
 
-        {/* Progress Bar */}
+        {/* Loading */}
         {loading && (
-          <div
-            style={{
-              marginTop: "25px",
-              height: "8px",
-              background: "#334155",
-              borderRadius: "6px",
-              overflow: "hidden",
-            }}
-          >
+          <div className="progress-bar">
             <div
-              style={{
-                width: `${progress}%`,
-                height: "100%",
-                background: "#22d3ee",
-                transition: "width 0.6s ease",
-              }}
+              className="progress-fill"
+              style={{ width: `${progress}%` }}
             />
           </div>
         )}
 
-        {/* RESULT BOX */}
+        {/* RESULT */}
         {result && (
-          <div
-            style={{
-              marginTop: "40px",
-              padding: "25px",
-              borderRadius: "14px",
-              background: isAI ? "#3f1d1d" : "#0f3d2e",
-              boxShadow: isAI
-                ? "0 0 25px rgba(255,0,0,0.4)"
-                : "0 0 25px rgba(0,255,0,0.3)",
-            }}
-          >
-            <h2
-              style={{
-                color: isAI ? "#ff4d4f" : "#00e676",
-                fontSize: "26px",
-                marginBottom: "10px",
-              }}
-            >
+          <div className="result-box">
+
+            <h2 style={{ color: isAI ? "#ff003c" : "#00ff88" }}>
               {result.label}
             </h2>
 
-            {/* Confidence Bar */}
-            <div
-              style={{
-                height: "10px",
-                background: "#1e293b",
-                borderRadius: "6px",
-                marginBottom: "15px",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  width: `${result.confidence_percent}%`,
-                  height: "100%",
-                  background: isAI ? "#ff4d4f" : "#00e676",
-                  transition: "width 0.8s ease",
-                }}
-              />
+            {/* Circular Confidence Meter */}
+            <div style={{ display: "flex", justifyContent: "center", margin: "20px 0" }}>
+              <svg width="180" height="180">
+                <circle
+                  stroke="rgba(255,255,255,0.1)"
+                  fill="transparent"
+                  strokeWidth="10"
+                  r={radius}
+                  cx="90"
+                  cy="90"
+                />
+                <circle
+                  stroke={isAI ? "#ff003c" : "#00ff88"}
+                  fill="transparent"
+                  strokeWidth="10"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={offset}
+                  strokeLinecap="round"
+                  r={radius}
+                  cx="90"
+                  cy="90"
+                  style={{ transition: "0.8s ease" }}
+                />
+                <text
+                  x="50%"
+                  y="50%"
+                  dominantBaseline="middle"
+                  textAnchor="middle"
+                  fill="white"
+                  fontSize="22"
+                  fontWeight="bold"
+                >
+                  {result.confidence_percent}%
+                </text>
+              </svg>
             </div>
 
-            <p><strong>Confidence:</strong> {result.confidence_percent}%</p>
-            <p><strong>Raw Score:</strong> {result.raw_score}</p>
-            <p><strong>Threshold Used:</strong> {result.threshold_used}</p>
             <p><strong>Inference Time:</strong> {result.inference_time_ms} ms</p>
+            <p style={{ opacity: 0.8 }}>{result.reason}</p>
 
-            <hr style={{ margin: "20px 0", opacity: 0.2 }} />
+            <button
+              onClick={downloadReport}
+              className="secondary-btn"
+              style={{ marginTop: "15px" }}
+            >
+              📄 Download Report
+            </button>
 
-            <p style={{ fontStyle: "italic", opacity: 0.9 }}>
-              {result.reason}
-            </p>
+            <button
+              onClick={resetAll}
+              className="secondary-btn"
+              style={{ marginTop: "10px" }}
+            >
+              Analyze Another Image
+            </button>
 
-            {isAI ? (
-              <p style={{ marginTop: "10px", color: "#ff8a80" }}>
-                ⚠️ Synthetic generation patterns detected. Image likely created by AI model.
-              </p>
-            ) : (
-              <p style={{ marginTop: "10px", color: "#69f0ae" }}>
-                ✅ Natural texture consistency and organic pixel transitions confirmed.
-              </p>
-            )}
           </div>
         )}
+
       </div>
     </section>
   );

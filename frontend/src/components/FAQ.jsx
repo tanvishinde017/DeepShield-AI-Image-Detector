@@ -1,33 +1,31 @@
 export default function FAQ() {
   return (
-    <div className="container" style={{ padding: "100px 0" }}>
-      <h1 style={{ textAlign: "center", marginBottom: "50px" }}>
-        Frequently Asked Questions
-      </h1>
+    <div className="container faq-section">
+      <h1 className="faq-title">Frequently Asked Questions</h1>
 
-      <Question 
+      <Question
         q="How accurate is DeepShield?"
         a="DeepShield uses trained deep learning models and provides confidence-based predictions."
       />
 
-      <Question 
+      <Question
         q="Are uploaded files stored?"
         a="No. Uploaded files are processed temporarily and not permanently stored."
       />
 
-      <Question 
+      <Question
         q="Can DeepShield detect all deepfakes?"
         a="While highly accurate, no AI system guarantees 100% detection."
       />
 
-      <Question 
+      <Question
         q="Is my data secure?"
         a="Yes. Files are processed securely and deleted after analysis."
       />
 
-      <Question 
+      <Question
         q="Does it support video analysis?"
-        a="No. but it will become more advance to do video analysis."
+        a="Currently no, but future versions will include advanced video analysis support."
       />
     </div>
   );
@@ -35,9 +33,9 @@ export default function FAQ() {
 
 function Question({ q, a }) {
   return (
-    <div className="glass" style={{ padding: "30px", marginBottom: "20px" }}>
-      <h3>{q}</h3>
-      <p style={{ opacity: 0.7 }}>{a}</p>
+    <div className="glass-card">
+      <h3 className="faq-question">{q}</h3>
+      <p className="faq-answer">{a}</p>
     </div>
   );
 }

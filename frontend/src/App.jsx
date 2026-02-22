@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 import ExampleSection from "./components/ExampleSection";
 import Home from "./pages/Home";
 import AnalyzeImage from "./pages/AnalyzeImage";
@@ -20,6 +21,8 @@ function App() {
         <Route path="/how-it-works" element={<HowItWorks />} />
         <Route path="/examples" element={<ExampleSection />} />
       </Routes>
+
+      <Footer />
     </>
   );
 }
