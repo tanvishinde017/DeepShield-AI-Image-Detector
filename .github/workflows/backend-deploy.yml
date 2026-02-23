@@ -24,8 +24,9 @@ jobs:
       # 3️⃣ Install dependencies
       - name: Install dependencies
         run: |
+          cd backend
           python -m pip install --upgrade pip
-          pip install -r backend/requirements.txt
+          pip install -r requirements.txt
 
       # 4️⃣ Log in to Azure using Service Principal
       - name: Azure Login
