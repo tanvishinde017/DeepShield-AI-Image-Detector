@@ -1,44 +1,32 @@
-name: Build and Deploy Backend to Azure Web App
+name: Build and Deploy Docker to Azure
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      packages: write
+
     steps:
-      # 1️⃣ Checkout repository
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      # 2️⃣ Set up Python
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      # 3️⃣ Install dependencies
-      - name: Install dependencies
-        run: |
-          cd backend
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+      - name: Build Docker Image
+        run: docker build -t ghcr.io/${{ github.repository }}/deepshield:latest .
 
-      # 4️⃣ Log in to Azure using Service Principal
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
+      - name: Push Docker Image
+        run: docker push ghcr.io/${{ github.repository }}/deepshield:latest
 
-      # 5️⃣ Deploy to Azure Web App
-      - name: Deploy to Azure Web App
+      - name: Deploy to Azure Web App (Container)
         uses: azure/webapps-deploy@v2
         with:
-          app-name: deepshield-backend-tanavi-v2
-          package: .
+          app-name: deepshield-backend-tanavi
+          images: ghcr.io/${{ github.repository }}/deepshield:latest
