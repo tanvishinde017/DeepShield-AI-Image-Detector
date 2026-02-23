@@ -159,3 +159,10 @@ Then run:
 
 npm install
 
+deployment done 
+backend = render
+frontend = vercel  
+
+check = deep-shield-ai-image-detector.vercel.app
+ 
+ and for frontend = https://deepshield-ai-image-detector-1.onrender.com
