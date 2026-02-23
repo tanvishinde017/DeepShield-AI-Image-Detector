@@ -164,6 +164,6 @@ backend = render
 frontend = vercel  
 
 check 
-backen = [Link Text](deep-shield-ai-image-detector.vercel.app)
+backend= deep-shield-ai-image-detector.vercel.app
  
-frontend = [Link Text](https://deepshield-ai-image-detector-1.onrender.com)
+frontend= https://deepshield-ai-image-detector-1.onrender.com
