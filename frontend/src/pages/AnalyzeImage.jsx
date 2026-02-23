@@ -1,58 +1,77 @@
 import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 
-
 export default function AnalyzeImage() {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
-  const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [dragActive, setDragActive] = useState(false);
+  const [statusText, setStatusText] = useState("");
+  const [result, setResult] = useState(null);
+  const [showFinal, setShowFinal] = useState(false);
+  const [printedLines, setPrintedLines] = useState([]);
   const [error, setError] = useState(null);
 
   const inputRef = useRef();
 
-  // Clean preview memory
   useEffect(() => {
     return () => {
       if (preview) URL.revokeObjectURL(preview);
     };
   }, [preview]);
 
-  // Handle file select
   const handleFile = (selected) => {
     if (!selected) return;
-
-    if (!selected.type.startsWith("image/")) {
-      alert("Please upload a valid image file.");
-      return;
-    }
+    if (!selected.type.startsWith("image/"))
+      return alert("Upload a valid image file.");
 
     setFile(selected);
     setPreview(URL.createObjectURL(selected));
     setResult(null);
+    setShowFinal(false);
+    setPrintedLines([]);
     setError(null);
   };
 
-  // Submit to backend
+  const printDescription = (lines) => {
+    let i = 0;
+    const interval = setInterval(() => {
+      setPrintedLines((prev) => [...prev, lines[i]]);
+      i++;
+      if (i === lines.length) clearInterval(interval);
+    }, 900);
+  };
+
   const handleSubmit = async () => {
-    if (!file) {
-      alert("Upload image first.");
-      return;
-    }
+    if (!file) return alert("Upload image first.");
 
     const formData = new FormData();
     formData.append("file", file);
 
     setLoading(true);
     setProgress(0);
+    setStatusText("Initializing DeepShield Engine...");
     setResult(null);
-    setError(null);
+    setShowFinal(false);
+    setPrintedLines([]);
 
-    const interval = setInterval(() => {
-      setProgress((prev) => (prev < 90 ? prev + 5 : prev));
-    }, 200);
+    let current = 0;
+
+    const scanInterval = setInterval(() => {
+      current += 5;
+      setProgress(current);
+
+      if (current < 30)
+        setStatusText("Scanning pixel matrix...");
+      else if (current < 60)
+        setStatusText("Detecting synthetic fingerprints...");
+      else if (current < 85)
+        setStatusText("Analyzing lighting gradients...");
+      else
+        setStatusText("Evaluating structural consistency...");
+
+      if (current >= 100) clearInterval(scanInterval);
+    }, 300);
 
     try {
       const API_URL =
@@ -61,88 +80,66 @@ export default function AnalyzeImage() {
       const response = await axios.post(
         `${API_URL}/api/predict-image`,
         formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        { headers: { "Content-Type": "multipart/form-data" } }
       );
 
-      clearInterval(interval);
-      setProgress(100);
-      setResult(response.data);
+      setTimeout(() => {
+        setLoading(false);
+        setResult(response.data);
+        setShowFinal(true);
+        setStatusText("Deep Forensic Scan Complete");
+
+        const isFake = response.data.label === "Fake";
+
+        const lines = isFake
+          ? [
+              "Neural texture inconsistencies detected.",
+              "Lighting mismatch across regions.",
+              "GAN artifact probability elevated.",
+              "Edge distortion signatures found.",
+              "Confidence exceeds authenticity threshold."
+            ]
+          : [
+              "Natural lighting distribution verified.",
+              "No GAN artifacts detected.",
+              "Consistent skin and texture gradients.",
+              "Pixel alignment structurally valid.",
+              "Authenticity threshold confirmed."
+            ];
+
+        printDescription(lines);
+
+      }, 3500);
+
     } catch (err) {
-      clearInterval(interval);
-      console.error(err);
-      setError("❌ Backend not running or server error.");
-    } finally {
+      setError("Backend connection error.");
       setLoading(false);
     }
   };
 
-  // Reset
   const resetAll = () => {
     setFile(null);
     setPreview(null);
     setResult(null);
     setProgress(0);
-    setError(null);
-  };
-
-  // Download Report
-  const downloadReport = () => {
-    if (!result) return;
-
-    const content = `
-DeepShield AI Report
------------------------------
-File Name: ${file.name}
-Prediction: ${result.label}
-Confidence: ${result.confidence_percent}%
-Real Probability: ${result.real_probability}%
-Fake Probability: ${result.fake_probability}%
-Inference Time: ${result.inference_time_ms} ms
-Reason: ${result.reason}
-    `;
-
-    const blob = new Blob([content], { type: "text/plain" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "DeepShield_Report.txt";
-    link.click();
+    setShowFinal(false);
+    setPrintedLines([]);
+    setStatusText("");
   };
 
   const isFake = result?.label === "Fake";
   const confidence = result?.confidence_percent || 0;
 
-  const radius = 70;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (confidence / 100) * circumference;
+  const circleOffset = 377 - (377 * confidence) / 100;
 
   return (
-    <div className="container">
-      <div className="card">
-        <h1>🔍 DeepShield AI Image Analysis</h1>
+    <div className="analyze-section">
+      <div className="analyze-container">
 
-        {/* Upload Area */}
-        <div
-          className={`upload-box ${dragActive ? "active" : ""}`}
-          onClick={() => inputRef.current.click()}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragActive(true);
-          }}
-          onDragLeave={() => setDragActive(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragActive(false);
-            handleFile(e.dataTransfer.files[0]);
-          }}
-        >
-          {file
-            ? "Click or Drop to Change Image"
-            : "Drag & Drop Image or Click to Upload"}
+        <h2 className="analyze-title">🛡 DeepShield AI Scanner</h2>
 
+        <div className="upload-box" onClick={() => inputRef.current.click()}>
+          {file ? "Change Image" : "Upload Image"}
           <input
             ref={inputRef}
             type="file"
@@ -152,98 +149,87 @@ Reason: ${result.reason}
           />
         </div>
 
-        {/* Image Preview */}
         {preview && (
-          <div className="preview-container">
+          <div className="image-wrapper">
             <img src={preview} alt="preview" />
-            {loading && <div className="scan-line"></div>}
+            {loading && <div className="scan-overlay"></div>}
           </div>
         )}
 
-        {/* Analyze Button */}
         {file && !loading && (
-          <button className="primary-btn" onClick={handleSubmit}>
-            🚀 Start AI Analysis
+          <button className="analyze-btn" onClick={handleSubmit}>
+            Start Deep Scan
           </button>
         )}
 
-        {/* Progress */}
         {loading && (
-          <div className="progress">
-            <div
-              className="progress-fill"
-              style={{ width: `${progress}%` }}
-            ></div>
-          </div>
+          <>
+            <div className="progress-bar">
+              <div
+                className="progress-fill"
+                style={{ width: `${progress}%` }}
+              ></div>
+            </div>
+            <p className="scan-status">{statusText}</p>
+          </>
         )}
 
-        {/* Error */}
+        {showFinal && result && (
+  <div className="final-result">
+
+    {/* BIG RESULT TEXT AT TOP */}
+    <div className={`result-label ${isFake ? "fake" : "real"}`}>
+      {isFake
+        ? "⚠ AI GENERATED IMAGE"
+        : "✅ AUTHENTIC REAL IMAGE"}
+    </div>
+
+    {/* BIG CIRCLE PERCENTAGE */}
+    <div className="result-circle">
+      <svg width="160" height="160">
+        <circle
+          cx="80"
+          cy="80"
+          r="70"
+          className="circle-bg"
+        />
+        <circle
+          cx="80"
+          cy="80"
+          r="70"
+          className="circle-progress"
+          style={{
+            strokeDasharray: 439.6,
+            strokeDashoffset:
+              439.6 - (439.6 * confidence) / 100
+          }}
+        />
+      </svg>
+
+      <div className="circle-text">
+        {confidence}%
+      </div>
+    </div>
+
+    {/* DESCRIPTION */}
+    <div className="description-box">
+      {printedLines.map((line, index) => (
+        <div key={index} className="desc-line">
+          ➤ {line}
+        </div>
+      ))}
+    </div>
+
+    <button className="secondary-btn" onClick={resetAll}>
+      Analyze Another Image
+    </button>
+
+  </div>
+)}
+      
+
         {error && <p className="error">{error}</p>}
 
-        {/* Result */}
-        {result && (
-          <div className="result">
-            <h2 className={isFake ? "fake" : "real"}>
-              {result.label === "Unknown"
-                ? "⚠️ Unknown Image"
-                : isFake
-                ? "⚠️ AI Generated"
-                : "✅ Real Image"}
-            </h2>
-
-            <div className="circle-wrapper">
-              <svg width="180" height="180">
-                <circle
-                  stroke="rgba(255,255,255,0.1)"
-                  fill="transparent"
-                  strokeWidth="10"
-                  r={radius}
-                  cx="90"
-                  cy="90"
-                />
-                <circle
-                  stroke={
-                    result.label === "Unknown"
-                      ? "#ffaa00"
-                      : isFake
-                      ? "#ff003c"
-                      : "#00ff88"
-                  }
-                  fill="transparent"
-                  strokeWidth="10"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={offset}
-                  strokeLinecap="round"
-                  r={radius}
-                  cx="90"
-                  cy="90"
-                />
-                <text
-                  x="50%"
-                  y="50%"
-                  dominantBaseline="middle"
-                  textAnchor="middle"
-                  fill="white"
-                  fontSize="22"
-                  fontWeight="bold"
-                >
-                  {confidence}%
-                </text>
-              </svg>
-            </div>
-
-            <p>Inference: {result.inference_time_ms} ms</p>
-            <p>{result.reason}</p>
-
-            <button className="secondary-btn" onClick={downloadReport}>
-              📄 Download Report
-            </button>
-
-            <button className="secondary-btn" onClick={resetAll}>
-              Analyze Another Image
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

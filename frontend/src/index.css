@@ -226,8 +226,6 @@ body::after {
   z-index: 2;
 }
 
-/* Layout Grid */
-
 .analyze-wrapper {
   max-width: 1200px;
   margin: auto;
@@ -236,7 +234,7 @@ body::after {
   gap: 40px;
 }
 
-/* Left Panel (Upload) */
+/* Upload Panel */
 
 .upload-panel {
   background: rgba(255,255,255,0.05);
@@ -246,7 +244,7 @@ body::after {
   backdrop-filter: blur(20px);
 }
 
-/* Right Panel (Result) */
+/* Result Panel */
 
 .result-panel {
   background: rgba(255,255,255,0.04);
@@ -256,7 +254,7 @@ body::after {
   backdrop-filter: blur(20px);
 }
 
-/* Title */
+/* Titles */
 
 .analyze-title {
   font-size: 36px;
@@ -287,13 +285,110 @@ body::after {
   background: rgba(0,255,136,0.06);
 }
 
-/* Preview */
+/* ================= IMAGE + SCAN EFFECT ================= */
 
-.preview-img {
-  margin-top: 25px;
+.image-wrapper {
+  position: relative;
+  width: 300px;
+  margin: 20px auto;
+}
+
+.image-wrapper img {
   width: 100%;
-  max-width: 300px;
   border-radius: 16px;
+  box-shadow: 0 0 25px rgba(0, 255, 120, 0.4);
+}
+
+/* Scan Overlay */
+
+.scan-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.scan-overlay::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(to right, transparent, #00ffcc, transparent);
+  animation: scanMove 2s linear infinite;
+}
+
+/* Single Keyframe (important — only once) */
+
+@keyframes scanMove {
+  0% { top: 0%; }
+  100% { top: 100%; }
+}
+
+/* ================= PROGRESS BAR ================= */
+
+.progress-bar {
+  width: 100%;
+  height: 10px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+  margin-top: 15px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00ff88, #00ffaa);
+  transition: width 0.5s linear;
+}
+
+/* ================= RESULT ================= */
+
+.result-status {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 15px;
+}
+
+.result-status.real {
+  color: #00ff88;
+}
+
+.result-status.fake {
+  color: #ff003c;
+}
+
+.result-metrics {
+  margin-top: 15px;
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.result-metrics p {
+  margin-bottom: 8px;
+}
+
+/* Confidence Bar */
+
+.confidence-bar {
+  margin-top: 15px;
+  height: 12px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.1);
+}
+
+.confidence-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff003c, #00ff88);
+  transition: width 0.5s ease;
+}
+
+/* Scan Status Text */
+
+.scan-status {
+  color: #00ff88;
+  font-weight: bold;
+  margin-top: 10px;
 }
 
 /* Analyze Button */
@@ -317,62 +412,6 @@ body::after {
   box-shadow: 0 0 15px rgba(0,255,136,0.4);
 }
 
-/* Progress Bar */
-
-.progress-bar {
-  margin-top: 20px;
-  height: 10px;
-  background: rgba(255,255,255,0.08);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #00ff88, #00bfff);
-}
-
-/* Result Styles */
-
-.result-status {
-  font-size: 22px;
-  font-weight: 700;
-  margin-bottom: 15px;
-}
-
-.result-status.real {
-  color: #00ff88;
-}
-
-.result-status.fake {
-  color: #ff003c;
-}
-
-.result-metrics {
-  margin-top: 15px;
-  font-size: 14px;
-  opacity: 0.8;
-}
-
-.result-metrics p {
-  margin-bottom: 8px;
-}
-
-/* Confidence Bar */
-
-.confidence-bar {
-  margin-top: 15px;
-  height: 12px;
-  border-radius: 8px;
-  overflow: hidden;
-  background: rgba(255,255,255,0.1);
-}
-
-.confidence-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #ff003c, #00ff88);
-}
-
 /* Responsive */
 
 @media (max-width: 900px) {
@@ -381,17 +420,107 @@ body::after {
   }
 }
 
-.scan-line {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 4px;
-  background: linear-gradient(90deg, transparent, #00ff88, transparent);
-  animation: scanMove 2s linear infinite;
+/* FINAL RESULT SECTION */
+
+.final-result {
+  margin-top: 30px;
+  text-align: center;
+  animation: fadeIn 0.6s ease-in-out;
 }
 
-@keyframes scanMove {
-  0% { top: 0; }
-  100% { top: 100%; }
+/* RESULT LABEL */
+
+.result-label {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 25px;
+  letter-spacing: 1px;
+}
+
+.result-label.fake {
+  color: #ff003c;
+  text-shadow: 0 0 15px rgba(255, 0, 60, 0.7);
+}
+
+.result-label.real {
+  color: #00ff88;
+  text-shadow: 0 0 15px rgba(0, 255, 136, 0.7);
+}
+
+/* CIRCLE */
+
+.result-circle {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  margin: 0 auto 25px auto;
+}
+
+.result-circle svg {
+  transform: rotate(-90deg);
+}
+
+.circle-bg {
+  fill: none;
+  stroke: rgba(255,255,255,0.1);
+  stroke-width: 12;
+}
+
+.circle-progress {
+  fill: none;
+  stroke-width: 12;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1.5s ease;
+}
+
+.result-label.fake + .result-circle .circle-progress {
+  stroke: #ff003c;
+}
+
+.result-label.real + .result-circle .circle-progress {
+  stroke: #00ff88;
+}
+
+/* PERCENT TEXT */
+
+.circle-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 32px;
+  font-weight: 900;
+}
+
+/* DESCRIPTION */
+
+.description-box {
+  margin-top: 20px;
+  text-align: left;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.desc-line {
+  margin-bottom: 10px;
+  font-size: 16px;
+  opacity: 0;
+  animation: slideUp 0.4s forwards;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0 }
+  to { opacity: 1 }
 }
