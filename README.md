@@ -167,3 +167,9 @@ check
 backen = [Link Text](deep-shield-ai-image-detector.vercel.app)
  
 frontend = [Link Text](https://deepshield-ai-image-detector-1.onrender.com)
+
+## Live Demo
+
+Frontend: [Open DeepShield AI](https://deepshield-ai-image-detector.vercel.app)
+
+Backend: [Open Backend API](https://deepshield-ai-image-detector-1.onrender.com)
