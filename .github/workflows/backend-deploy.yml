@@ -1,4 +1,4 @@
-name: Build and Deploy Docker to Azure
+name: Docker Backend Deploy
 
 on:
   push:
@@ -6,27 +6,20 @@ on:
       - main
 
 jobs:
-  build-and-deploy:
+  build-and-push:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-      packages: write
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Log in to GitHub Container Registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Log in to Azure Container Registry
+        run: |
+          echo ${{ secrets.ACR_PASSWORD }} | docker login ${{ secrets.ACR_LOGIN_SERVER }} -u ${{ secrets.ACR_USERNAME }} --password-stdin
 
-      - name: Build Docker Image
-        run: docker build -t ghcr.io/${{ github.repository }}/deepshield:latest .
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/deepshield-backend:latest .
 
-      - name: Push Docker Image
-        run: docker push ghcr.io/${{ github.repository }}/deepshield:latest
-
-      - name: Deploy to Azure Web App (Container)
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: deepshield-backend-tanavi
-          images: ghcr.io/${{ github.repository }}/deepshield:latest
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/deepshield-backend:latest
