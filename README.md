@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
@@ -175,4 +175,4 @@ Inside frontend package.json, ensure this:
 Then run:
 
 npm install
->>>>>>> e01c9e7984ccd6ee48a85e718bdd67393259662e
+
