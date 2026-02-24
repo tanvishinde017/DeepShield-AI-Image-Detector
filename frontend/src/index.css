@@ -524,3 +524,26 @@ body::after {
   from { opacity: 0 }
   to { opacity: 1 }
 }
+.scan-time {
+  font-size: 14px;
+  opacity: 0.8;
+  margin-top: 6px;
+}
+
+.analysis-meta {
+  margin-bottom: 15px;
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.pulse-dot {
+  color: #00ffcc;
+  margin-right: 8px;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
+}

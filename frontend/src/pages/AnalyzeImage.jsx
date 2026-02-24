@@ -12,6 +12,11 @@ export default function AnalyzeImage() {
   const [printedLines, setPrintedLines] = useState([]);
   const [error, setError] = useState(null);
 
+  // NEW STATES
+  const [scanTime, setScanTime] = useState(0);
+  const [displayConfidence, setDisplayConfidence] = useState(0);
+  const [analysisTime, setAnalysisTime] = useState(null);
+
   const inputRef = useRef();
 
   useEffect(() => {
@@ -31,6 +36,7 @@ export default function AnalyzeImage() {
     setShowFinal(false);
     setPrintedLines([]);
     setError(null);
+    setDisplayConfidence(0);
   };
 
   const printDescription = (lines) => {
@@ -39,7 +45,7 @@ export default function AnalyzeImage() {
       setPrintedLines((prev) => [...prev, lines[i]]);
       i++;
       if (i === lines.length) clearInterval(interval);
-    }, 900);
+    }, 800);
   };
 
   const handleSubmit = async () => {
@@ -54,9 +60,12 @@ export default function AnalyzeImage() {
     setResult(null);
     setShowFinal(false);
     setPrintedLines([]);
+    setDisplayConfidence(0);
+    setScanTime(0);
 
     let current = 0;
 
+    // Progress animation
     const scanInterval = setInterval(() => {
       current += 5;
       setProgress(current);
@@ -73,9 +82,13 @@ export default function AnalyzeImage() {
       if (current >= 100) clearInterval(scanInterval);
     }, 300);
 
+    // Live Timer
+    const timer = setInterval(() => {
+      setScanTime((prev) => prev + 1);
+    }, 1000);
+
     try {
-      const API_URL =
-        import.meta.env.VITE_API_URL;
+      const API_URL = import.meta.env.VITE_API_URL;
 
       const response = await axios.post(
         `${API_URL}/api/predict-image`,
@@ -84,10 +97,12 @@ export default function AnalyzeImage() {
       );
 
       setTimeout(() => {
+        clearInterval(timer);
         setLoading(false);
         setResult(response.data);
         setShowFinal(true);
         setStatusText("Deep Forensic Scan Complete");
+        setAnalysisTime(new Date().toLocaleTimeString());
 
         const isFake = response.data.label === "Fake";
 
@@ -109,9 +124,20 @@ export default function AnalyzeImage() {
 
         printDescription(lines);
 
+        // Animate confidence
+        let start = 0;
+        const end = response.data.confidence_percent;
+
+        const counter = setInterval(() => {
+          start += 1;
+          setDisplayConfidence(start);
+          if (start >= end) clearInterval(counter);
+        }, 20);
+
       }, 3500);
 
     } catch (err) {
+      clearInterval(timer);
       setError("Backend connection error.");
       setLoading(false);
     }
@@ -125,12 +151,13 @@ export default function AnalyzeImage() {
     setShowFinal(false);
     setPrintedLines([]);
     setStatusText("");
+    setDisplayConfidence(0);
+    setScanTime(0);
+    setAnalysisTime(null);
   };
 
   const isFake = result?.label === "Fake";
-  const confidence = result?.confidence_percent || 0;
-
-  const circleOffset = 377 - (377 * confidence) / 100;
+  const confidence = displayConfidence;
 
   return (
     <div className="analyze-section">
@@ -171,62 +198,59 @@ export default function AnalyzeImage() {
               ></div>
             </div>
             <p className="scan-status">{statusText}</p>
+            <p className="scan-time">⏱ Scan Duration: {scanTime}s</p>
           </>
         )}
 
         {showFinal && result && (
-  <div className="final-result">
+          <div className="final-result">
 
-    {/* BIG RESULT TEXT AT TOP */}
-    <div className={`result-label ${isFake ? "fake" : "real"}`}>
-      {isFake
-        ? "⚠ AI GENERATED IMAGE"
-        : "✅ AUTHENTIC REAL IMAGE"}
-    </div>
+            <div className="analysis-meta">
+              <div>🕒 Completed At: {analysisTime}</div>
+              <div>⚡ Total Scan Time: {scanTime} seconds</div>
+            </div>
 
-    {/* BIG CIRCLE PERCENTAGE */}
-    <div className="result-circle">
-      <svg width="160" height="160">
-        <circle
-          cx="80"
-          cy="80"
-          r="70"
-          className="circle-bg"
-        />
-        <circle
-          cx="80"
-          cy="80"
-          r="70"
-          className="circle-progress"
-          style={{
-            strokeDasharray: 439.6,
-            strokeDashoffset:
-              439.6 - (439.6 * confidence) / 100
-          }}
-        />
-      </svg>
+            <div className={`result-label ${isFake ? "fake" : "real"}`}>
+              {isFake
+                ? "⚠ AI GENERATED IMAGE"
+                : "✅ AUTHENTIC REAL IMAGE"}
+            </div>
 
-      <div className="circle-text">
-        {confidence}%
-      </div>
-    </div>
+            <div className="result-circle">
+              <svg width="160" height="160">
+                <circle cx="80" cy="80" r="70" className="circle-bg" />
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="70"
+                  className="circle-progress"
+                  style={{
+                    strokeDasharray: 439.6,
+                    strokeDashoffset:
+                      439.6 - (439.6 * confidence) / 100
+                  }}
+                />
+              </svg>
 
-    {/* DESCRIPTION */}
-    <div className="description-box">
-      {printedLines.map((line, index) => (
-        <div key={index} className="desc-line">
-          ➤ {line}
-        </div>
-      ))}
-    </div>
+              <div className="circle-text">
+                {confidence}%
+              </div>
+            </div>
 
-    <button className="secondary-btn" onClick={resetAll}>
-      Analyze Another Image
-    </button>
+            <div className="description-box">
+              {printedLines.map((line, index) => (
+                <div key={index} className="desc-line">
+                  <span className="pulse-dot">●</span> {line}
+                </div>
+              ))}
+            </div>
 
-  </div>
-)}
-      
+            <button className="secondary-btn" onClick={resetAll}>
+              Analyze Another Image
+            </button>
+
+          </div>
+        )}
 
         {error && <p className="error">{error}</p>}
 
