@@ -547,3 +547,15 @@ body::after {
   50% { opacity: 1; }
   100% { opacity: 0.4; }
 }
+
+.glitch img {
+  animation: glitch 0.3s infinite;
+}
+
+@keyframes glitch {
+  0% { transform: translate(1px, -1px); }
+  25% { transform: translate(-1px, 1px); }
+  50% { transform: translate(1px, 1px); }
+  75% { transform: translate(-1px, -1px); }
+  100% { transform: translate(0); }
+}
