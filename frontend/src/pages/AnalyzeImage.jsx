@@ -6,7 +6,6 @@ export default function AnalyzeImage() {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [statusText, setStatusText] = useState("");
   const [result, setResult] = useState(null);
   const [showFinal, setShowFinal] = useState(false);
   const [printedLines, setPrintedLines] = useState([]);
@@ -17,6 +16,10 @@ export default function AnalyzeImage() {
   const [analysisTime, setAnalysisTime] = useState(null);
   const [scanId, setScanId] = useState(null);
   const [threatLevel, setThreatLevel] = useState("LOW");
+
+  const [imageInfo, setImageInfo] = useState(null);
+  const [recommendation, setRecommendation] = useState([]);
+  const modelVersion = "DeepShield v2.1";
 
   const inputRef = useRef();
   const timerRef = useRef(null);
@@ -30,9 +33,8 @@ export default function AnalyzeImage() {
     };
   }, [preview]);
 
-  const generateScanId = () => {
-    return "DS-" + Math.random().toString(36).substring(2, 8).toUpperCase();
-  };
+  const generateScanId = () =>
+    "DS-" + Math.random().toString(36).substring(2, 8).toUpperCase();
 
   const resetStates = () => {
     setResult(null);
@@ -44,6 +46,14 @@ export default function AnalyzeImage() {
     setAnalysisTime(null);
     setScanId(null);
     setThreatLevel("LOW");
+    setRecommendation([]);
+  };
+
+  const interpretConfidence = (confidence) => {
+    if (confidence > 85) return "Extremely High Certainty";
+    if (confidence > 65) return "Strong Detection Confidence";
+    if (confidence > 45) return "Moderate Confidence";
+    return "Low Detection Confidence";
   };
 
   const handleFile = (selected) => {
@@ -51,22 +61,31 @@ export default function AnalyzeImage() {
     if (!selected.type.startsWith("image/"))
       return alert("Upload a valid image file.");
 
+    const img = new Image();
+    img.onload = function () {
+      setImageInfo({
+        name: selected.name,
+        sizeKB: (selected.size / 1024).toFixed(2),
+        width: img.width,
+        height: img.height,
+        type: selected.type,
+      });
+    };
+    img.src = URL.createObjectURL(selected);
+
     setFile(selected);
     setPreview(URL.createObjectURL(selected));
     resetStates();
   };
 
-  // ✅ FIXED PRINT FUNCTION (no empty bullet)
   const printDescription = (lines) => {
     let i = 0;
     const interval = setInterval(() => {
       if (i < lines.length) {
         setPrintedLines((prev) => [...prev, lines[i]]);
         i++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 700);
+      } else clearInterval(interval);
+    }, 600);
   };
 
   const handleSubmit = async () => {
@@ -78,20 +97,14 @@ export default function AnalyzeImage() {
     resetStates();
     setLoading(true);
     setProgress(0);
-    setStatusText("Initializing DeepShield Engine...");
     setScanId(generateScanId());
 
-    // ⏱ Timer
     timerRef.current = setInterval(() => {
       setScanTime((prev) => prev + 1);
     }, 1000);
 
-    // 📊 Smooth progress
     progressRef.current = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 95) return prev;
-        return prev + Math.random() * 4;
-      });
+      setProgress((prev) => (prev >= 95 ? prev : prev + Math.random() * 5));
     }, 400);
 
     try {
@@ -115,12 +128,10 @@ export default function AnalyzeImage() {
 
         const confidence = response.data.confidence_percent;
 
-        // 🚨 Threat level logic
         if (confidence > 75) setThreatLevel("HIGH");
         else if (confidence > 40) setThreatLevel("MEDIUM");
         else setThreatLevel("LOW");
 
-        // 🎯 Animate confidence
         let start = 0;
         const counter = setInterval(() => {
           start += 1;
@@ -136,19 +147,33 @@ export default function AnalyzeImage() {
               "GAN artifact patterns confirmed.",
               "Lighting mismatch across regions.",
               "Edge distortion signatures found.",
-              "AI synthesis probability elevated."
+              "AI synthesis probability elevated.",
             ]
           : [
               "Natural lighting distribution verified.",
               "Texture gradients consistent.",
               "No GAN artifacts detected.",
               "Pixel alignment structurally valid.",
-              "Authenticity confirmed."
+              "Authenticity confirmed.",
             ];
 
         printDescription(lines);
-      }, 1500);
 
+        if (isFake) {
+          setRecommendation([
+            "Avoid sharing this image publicly.",
+            "Verify source authenticity.",
+            "Cross-check with reverse image search.",
+            "Report suspicious media.",
+          ]);
+        } else {
+          setRecommendation([
+            "Image passed forensic checks.",
+            "No synthetic artifact detected.",
+            "Safe for normal usage.",
+          ]);
+        }
+      }, 1500);
     } catch (err) {
       clearInterval(timerRef.current);
       clearInterval(progressRef.current);
@@ -169,6 +194,7 @@ Scan Duration: ${scanTime} seconds
 Result: ${result.label}
 Confidence: ${displayConfidence}%
 Threat Level: ${threatLevel}
+Model Version: ${modelVersion}
 ---------------------------------
 `;
 
@@ -183,6 +209,7 @@ Threat Level: ${threatLevel}
   const resetAll = () => {
     setFile(null);
     setPreview(null);
+    setImageInfo(null);
     resetStates();
   };
 
@@ -192,8 +219,7 @@ Threat Level: ${threatLevel}
   return (
     <div className="analyze-section">
       <div className="analyze-container">
-
-        <h2 className="analyze-title">🛡 DeepShield AI Scanner</h2>
+        <h2>🛡 DeepShield AI Scanner</h2>
 
         <div className="upload-box" onClick={() => inputRef.current.click()}>
           {file ? "Change Image" : "Upload Image"}
@@ -207,16 +233,13 @@ Threat Level: ${threatLevel}
         </div>
 
         {preview && (
-          <div className={`image-wrapper ${isFake ? "glitch" : ""}`}>
+          <div className="image-wrapper">
             <img src={preview} alt="preview" />
-            {loading && <div className="scan-overlay"></div>}
           </div>
         )}
 
         {file && !loading && (
-          <button className="analyze-btn" onClick={handleSubmit}>
-            Start Deep Scan
-          </button>
+          <button onClick={handleSubmit}>Start Deep Scan</button>
         )}
 
         {loading && (
@@ -227,7 +250,6 @@ Threat Level: ${threatLevel}
                 style={{ width: `${progress}%` }}
               ></div>
             </div>
-            <p>{statusText}</p>
             <p>⏱ Scan Time: {scanTime}s</p>
             <p>🆔 Scan ID: {scanId}</p>
           </>
@@ -235,59 +257,47 @@ Threat Level: ${threatLevel}
 
         {showFinal && result && (
           <div className="final-result">
+            <h3>
+              {isFake
+                ? "⚠ AI GENERATED IMAGE"
+                : "✅ AUTHENTIC REAL IMAGE"}
+            </h3>
 
-            <div className="analysis-meta">
-              <div>🆔 Scan ID: {scanId}</div>
-              <div>🕒 Completed At: {analysisTime}</div>
-              <div>⚡ Duration: {scanTime}s</div>
-              <div>🚨 Threat Level: {threatLevel}</div>
+            <h2>{confidence}%</h2>
+            <p>{interpretConfidence(confidence)}</p>
+            <p>Threat Level: {threatLevel}</p>
+            <p>Model: {modelVersion}</p>
+
+            <div>
+              {printedLines.map((line, index) => (
+                <div key={index}>● {line}</div>
+              ))}
             </div>
 
-            <div className={`result-label ${isFake ? "fake" : "real"}`}>
-              {isFake ? "⚠ AI GENERATED IMAGE" : "✅ AUTHENTIC REAL IMAGE"}
+            {imageInfo && (
+              <div>
+                <h4>Image Details</h4>
+                <p>Name: {imageInfo.name}</p>
+                <p>
+                  Resolution: {imageInfo.width} × {imageInfo.height}
+                </p>
+                <p>Size: {imageInfo.sizeKB} KB</p>
+              </div>
+            )}
+
+            <div>
+              <h4>Recommended Actions</h4>
+              {recommendation.map((rec, i) => (
+                <div key={i}>✔ {rec}</div>
+              ))}
             </div>
 
-            <div className="result-circle">
-              <svg width="160" height="160">
-                <circle cx="80" cy="80" r="70" className="circle-bg" />
-                <circle
-                  cx="80"
-                  cy="80"
-                  r="70"
-                  className="circle-progress"
-                  style={{
-                    strokeDasharray: 439.6,
-                    strokeDashoffset:
-                      439.6 - (439.6 * confidence) / 100
-                  }}
-                />
-              </svg>
-              <div className="circle-text">{confidence}%</div>
-            </div>
-
-            <div className="description-box">
-              {printedLines
-                .filter((line) => line)
-                .map((line, index) => (
-                  <div key={index} className="desc-line">
-                    ● {line}
-                  </div>
-                ))}
-            </div>
-
-            <button className="secondary-btn" onClick={downloadReport}>
-              Download Report
-            </button>
-
-            <button className="secondary-btn" onClick={resetAll}>
-              Analyze Another Image
-            </button>
-
+            <button onClick={downloadReport}>Download Report</button>
+            <button onClick={resetAll}>Analyze Another Image</button>
           </div>
         )}
 
-        {error && <p className="error">{error}</p>}
-
+        {error && <p>{error}</p>}
       </div>
     </div>
   );
