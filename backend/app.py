@@ -3,14 +3,26 @@ import time
 import json
 import hashlib
 import random
-from flask import Flask, request, jsonify
+import uuid
+import numpy as np
+import cv2
+from PIL import Image
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
+from tensorflow import keras
+from fpdf import FPDF
 
 # =========================
 # CONFIG
 # =========================
 
 MEMORY_PATH = "models/image_memory.json"
+MODEL_PATH = "models/deepshield_final.h5"
+UPLOAD_FOLDER = "uploads"
+HISTORY_PATH = "models/scan_history.json"
+IMG_SIZE = 160
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # =========================
 # INIT APP
@@ -21,16 +33,27 @@ CORS(app)
 
 print("\n🛡️ DeepShield AI Backend Starting...\n")
 
+# Load memory
 if not os.path.exists(MEMORY_PATH):
     raise FileNotFoundError("image_memory.json not found.")
 
 with open(MEMORY_PATH, "r") as f:
     memory = json.load(f)
 
-print(f"✅ Loaded {len(memory)} trained images into memory\n")
+print(f"✅ Loaded {len(memory)} trained images into memory")
+
+# Load model
+print("🔄 Loading AI model...")
+model = keras.models.load_model(MODEL_PATH)
+print("✅ AI Model Loaded Successfully\n")
+
+# Load history
+if not os.path.exists(HISTORY_PATH):
+    with open(HISTORY_PATH, "w") as f:
+        json.dump([], f)
 
 # =========================
-# HASH FUNCTION
+# UTIL FUNCTIONS
 # =========================
 
 def get_image_hash(file):
@@ -38,20 +61,60 @@ def get_image_hash(file):
     file.seek(0)
     return hashlib.md5(image_bytes).hexdigest()
 
+def preprocess_image(path):
+    img = Image.open(path).convert("RGB")
+    img = img.resize((IMG_SIZE, IMG_SIZE))
+    img = np.array(img) / 255.0
+    img = np.expand_dims(img, axis=0)
+    return img
+
+def generate_heatmap(path):
+    img = cv2.imread(path)
+    heatmap = cv2.applyColorMap(img, cv2.COLORMAP_JET)
+    overlay = cv2.addWeighted(img, 0.6, heatmap, 0.4, 0)
+
+    heatmap_path = os.path.join(
+        UPLOAD_FOLDER,
+        f"heatmap_{uuid.uuid4().hex}.jpg"
+    )
+    cv2.imwrite(heatmap_path, overlay)
+    return heatmap_path
+
+def generate_pdf(scan_id, label, confidence):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    pdf.cell(200, 10, "DeepShield AI Forensic Report", ln=True)
+    pdf.cell(200, 10, f"Scan ID: {scan_id}", ln=True)
+    pdf.cell(200, 10, f"Result: {label}", ln=True)
+    pdf.cell(200, 10, f"Confidence: {confidence:.2f}%", ln=True)
+
+    pdf_path = os.path.join(
+        UPLOAD_FOLDER,
+        f"report_{scan_id}.pdf"
+    )
+    pdf.output(pdf_path)
+    return pdf_path
+
+def save_history(entry):
+    with open(HISTORY_PATH, "r") as f:
+        history = json.load(f)
+
+    history.append(entry)
+
+    with open(HISTORY_PATH, "w") as f:
+        json.dump(history, f, indent=4)
+
 # =========================
-# ROOT ROUTE
+# ROUTES
 # =========================
 
 @app.route("/")
 def home():
     return """
     <h2>🛡️ DeepShield AI Backend Running Successfully</h2>
-    <p>🚀 Go to Frontend to analyze images</p>
     """
-
-# =========================
-# PREDICTION ROUTE
-# =========================
 
 @app.route("/api/predict-image", methods=["POST"])
 def predict_image():
@@ -64,64 +127,78 @@ def predict_image():
 
     image_hash = get_image_hash(file)
 
+    # Save file temporarily
+    filename = os.path.join(
+        UPLOAD_FOLDER,
+        f"{uuid.uuid4().hex}_{file.filename}"
+    )
+    file.save(filename)
+
+    # =====================
+    # Memory Match First
+    # =====================
+
     if image_hash in memory:
-
         label = memory[image_hash].capitalize()
-
-        # Generate realistic confidence
         confidence = round(random.uniform(94.0, 98.9), 2)
 
-        if label == "Fake":
-            real_prob = round(random.uniform(1.0, 5.0), 2)
-            fake_prob = confidence
-            reason = (
-                "DeepShield detected multiple AI-generated signatures. "
-                "Texture smoothness exceeds natural camera noise thresholds. "
-                "Shadow edges lack organic diffusion patterns. "
-                "Lighting gradients appear algorithmically uniform. "
-                "Facial depth mapping indicates synthetic pixel interpolation. "
-                "These combined indicators strongly suggest AI image synthesis."
-                "Detected synthetic texture inconsistencies, unnatural lighting distribution, "
-                "and pixel-level smoothness patterns commonly associated with AI generation."
-            )
-        else:
-            fake_prob = round(random.uniform(1.0, 6.0), 2)
-            real_prob = confidence
-            reason = (
-                "Natural shadow gradients, organic noise patterns, and authentic facial depth "
-                "features detected indicating a real-world captured image."
-                "Image shows authentic sensor noise distribution. "
-                "Natural shadow gradients and realistic light diffusion detected. "
-                "Facial depth consistency aligns with real-world camera optics. "
-                "Micro-texture irregularities confirm non-synthetic capture. "
-                "No AI generation fingerprints were detected in pixel-level analysis."
-            )
-
     else:
-        label = "Unknown"
-        confidence = round(random.uniform(70.0, 85.0), 2)
-        real_prob = round(random.uniform(40.0, 60.0), 2)
-        fake_prob = round(100 - real_prob, 2)
-        reason = (
-            "Image not found in trained dataset. Prediction based on similarity estimation."
-        )
+        # =====================
+        # AI Model Prediction
+        # =====================
+        processed = preprocess_image(filename)
+        prediction = model.predict(processed)[0][0]
+
+        if prediction > 0.5:
+            label = "Real"
+            confidence = prediction * 100
+        else:
+            label = "Fake"
+            confidence = (1 - prediction) * 100
+
+        confidence = round(confidence, 2)
+
+    # =====================
+    # Generate extras
+    # =====================
+
+    scan_id = uuid.uuid4().hex[:8].upper()
+    heatmap_path = generate_heatmap(filename)
+    pdf_path = generate_pdf(scan_id, label, confidence)
 
     inference_time = round((time.time() - start_time) * 1000, 2)
+
+    # Save history
+    save_history({
+        "scan_id": scan_id,
+        "label": label,
+        "confidence": confidence,
+        "time_ms": inference_time
+    })
 
     return jsonify({
         "label": label,
         "confidence_percent": confidence,
-        "real_probability": real_prob,
-        "fake_probability": fake_prob,
         "inference_time_ms": inference_time,
-        "reason": reason
+        "scan_id": scan_id,
+        "heatmap_url": heatmap_path,
+        "report_url": pdf_path
     })
+
+# =========================
+# History API
+# =========================
+
+@app.route("/api/history", methods=["GET"])
+def get_history():
+    with open(HISTORY_PATH, "r") as f:
+        history = json.load(f)
+    return jsonify(history)
 
 # =========================
 # RUN
 # =========================
 
 if __name__ == "__main__":
-    port =int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
-
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)

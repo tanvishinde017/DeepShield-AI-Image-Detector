@@ -217,88 +217,154 @@ Model Version: ${modelVersion}
   const confidence = displayConfidence;
 
   return (
-    <div className="analyze-section">
-      <div className="analyze-container">
-        <h2>🛡 DeepShield AI Scanner</h2>
+  <div className="analyze-section">
+    <div className="analyze-container">
+      <h2 className="analyze-title">🛡 DeepShield AI Scanner</h2>
 
-        <div className="upload-box" onClick={() => inputRef.current.click()}>
-          {file ? "Change Image" : "Upload Image"}
-          <input
-            ref={inputRef}
-            type="file"
-            hidden
-            accept="image/*"
-            onChange={(e) => handleFile(e.target.files[0])}
-          />
-        </div>
-
-        {preview && (
-          <div className="image-wrapper">
-            <img src={preview} alt="preview" />
-          </div>
-        )}
-
-        {file && !loading && (
-          <button onClick={handleSubmit}>Start Deep Scan</button>
-        )}
-
-        {loading && (
-          <>
-            <div className="progress-bar">
-              <div
-                className="progress-fill"
-                style={{ width: `${progress}%` }}
-              ></div>
-            </div>
-            <p>⏱ Scan Time: {scanTime}s</p>
-            <p>🆔 Scan ID: {scanId}</p>
-          </>
-        )}
-
-        {showFinal && result && (
-          <div className="final-result">
-            <h3>
-              {isFake
-                ? "⚠ AI GENERATED IMAGE"
-                : "✅ AUTHENTIC REAL IMAGE"}
-            </h3>
-
-            <h2>{confidence}%</h2>
-            <p>{interpretConfidence(confidence)}</p>
-            <p>Threat Level: {threatLevel}</p>
-            <p>Model: {modelVersion}</p>
-
-            <div>
-              {printedLines.map((line, index) => (
-                <div key={index}>● {line}</div>
-              ))}
-            </div>
-
-            {imageInfo && (
-              <div>
-                <h4>Image Details</h4>
-                <p>Name: {imageInfo.name}</p>
-                <p>
-                  Resolution: {imageInfo.width} × {imageInfo.height}
-                </p>
-                <p>Size: {imageInfo.sizeKB} KB</p>
-              </div>
-            )}
-
-            <div>
-              <h4>Recommended Actions</h4>
-              {recommendation.map((rec, i) => (
-                <div key={i}>✔ {rec}</div>
-              ))}
-            </div>
-
-            <button onClick={downloadReport}>Download Report</button>
-            <button onClick={resetAll}>Analyze Another Image</button>
-          </div>
-        )}
-
-        {error && <p>{error}</p>}
+      {/* Upload */}
+      <div className="upload-box" onClick={() => inputRef.current.click()}>
+        {file ? "Change Image" : "Upload Image"}
+        <input
+          ref={inputRef}
+          type="file"
+          hidden
+          accept="image/*"
+          onChange={(e) => handleFile(e.target.files[0])}
+        />
       </div>
+
+      {/* Preview */}
+      {preview && (
+        <div className={`image-wrapper ${isFake ? "glitch" : ""}`}>
+          <img src={preview} alt="preview" />
+          {loading && <div className="scan-overlay"></div>}
+        </div>
+      )}
+
+      {/* Scan Button */}
+      {file && !loading && (
+        <button className="analyze-btn" onClick={handleSubmit}>
+          Start Deep Scan
+        </button>
+      )}
+
+      {/* Loading */}
+      {loading && (
+        <>
+          <div className="progress-bar">
+            <div
+              className="progress-fill"
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+          <p className="scan-time">⏱ Scan Time: {scanTime}s</p>
+          <p className="scan-time">🆔 Scan ID: {scanId}</p>
+        </>
+      )}
+
+      {/* Final Result */}
+      {showFinal && result && (
+        <div className="final-result">
+
+          {/* Result Label */}
+          <div
+            className={`result-label ${isFake ? "fake" : "real"}`}
+          >
+            {isFake
+              ? "⚠ AI GENERATED IMAGE"
+              : "✅ AUTHENTIC REAL IMAGE"}
+          </div>
+
+          {/* Confidence Circle */}
+          <div className="result-circle">
+            <svg width="160" height="160">
+              <circle
+                className="circle-bg"
+                cx="80"
+                cy="80"
+                r="70"
+              />
+              <circle
+                className="circle-progress"
+                cx="80"
+                cy="80"
+                r="70"
+                strokeDasharray={440}
+                strokeDashoffset={
+                  440 - (440 * confidence) / 100
+                }
+              />
+            </svg>
+            <div className="circle-text">{confidence}%</div>
+          </div>
+
+          {/* Meta Info */}
+          <div className="analysis-meta">
+            <p>Threat Level: <strong>{threatLevel}</strong></p>
+            <p>{interpretConfidence(confidence)}</p>
+            <p>Model Version: {modelVersion}</p>
+          </div>
+
+          {/* Description */}
+          <div className="description-box">
+            {printedLines.map((line, index) => (
+              <div
+                key={index}
+                className="desc-line"
+                style={{ animationDelay: `${index * 0.2}s` }}
+              >
+                ● {line}
+              </div>
+            ))}
+          </div>
+
+          {/* Image Details */}
+          {imageInfo && (
+            <div className="image-details-box">
+              <h4>Image Details</h4>
+              <p>Name: {imageInfo.name}</p>
+              <p>
+                Resolution: {imageInfo.width} × {imageInfo.height}
+              </p>
+              <p>Size: {imageInfo.sizeKB} KB</p>
+              <p>Type: {imageInfo.type}</p>
+            </div>
+          )}
+
+          {/* Recommendations */}
+          <div className="recommendation-box">
+            <h4>Recommended Actions</h4>
+            {recommendation.map((rec, i) => (
+              <div key={i}>✔ {rec}</div>
+            ))}
+          </div>
+
+          {/* Buttons */}
+          <div className="report-buttons">
+            <button
+              className="download-btn"
+              onClick={downloadReport}
+            >
+              Download Report
+            </button>
+
+            <button
+              className="reset-btn"
+              onClick={resetAll}
+            >
+              Analyze Another Image
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Error */}
+      {error && (
+        <div className="error-message">
+          {error}
+        </div>
+      )}
     </div>
-  );
+  </div>
+); 
 }

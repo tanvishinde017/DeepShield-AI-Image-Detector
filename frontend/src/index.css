@@ -559,3 +559,145 @@ body::after {
   75% { transform: translate(-1px, -1px); }
   100% { transform: translate(0); }
 }
+
+/* ================= EXTENDED FINAL RESULT PROFESSIONAL ADDITIONS ================= */
+
+/* Final Result Card Polish */
+.final-result {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(25px);
+  border-radius: 20px;
+  padding: 30px;
+  border: 1px solid rgba(0, 255, 136, 0.25);
+  box-shadow:
+    0 0 25px rgba(0, 255, 136, 0.2),
+    inset 0 0 20px rgba(255, 255, 255, 0.03);
+}
+
+/* Confidence Text Styling */
+.final-result h2 {
+  font-size: 48px;
+  font-weight: 900;
+  background: linear-gradient(90deg, #00ff88, #00bfff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 10px;
+}
+
+/* Technical Info Block */
+.tech-info {
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 12px;
+  background: rgba(0, 191, 255, 0.08);
+  border: 1px solid rgba(0, 191, 255, 0.25);
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* Image Details Card */
+.image-details-box {
+  margin-top: 25px;
+  padding: 18px;
+  border-radius: 14px;
+  background: rgba(0, 255, 136, 0.06);
+  border: 1px solid rgba(0, 255, 136, 0.25);
+}
+
+.image-details-box h4 {
+  margin-bottom: 10px;
+  color: #00ff88;
+  font-weight: 700;
+}
+
+.image-details-box p {
+  font-size: 14px;
+  margin-bottom: 6px;
+  opacity: 0.85;
+}
+
+/* Recommended Actions */
+.recommendation-box {
+  margin-top: 25px;
+  padding: 18px;
+  border-radius: 14px;
+  background: rgba(255, 0, 60, 0.06);
+  border: 1px solid rgba(255, 0, 60, 0.25);
+}
+
+.recommendation-box h4 {
+  margin-bottom: 10px;
+  color: #ff003c;
+  font-weight: 700;
+}
+
+.recommendation-box div {
+  font-size: 14px;
+  margin-bottom: 6px;
+  opacity: 0.9;
+}
+
+/* Report Buttons */
+.report-buttons {
+  margin-top: 25px;
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.report-buttons button {
+  flex: 1;
+  min-width: 160px;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+/* Download Button */
+.download-btn {
+  background: linear-gradient(90deg, #00bfff, #00ff88);
+  color: black;
+}
+
+.download-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+}
+
+/* Reset Button */
+.reset-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.reset-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Error Message Styling */
+.error-message {
+  margin-top: 20px;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(255, 0, 60, 0.1);
+  border: 1px solid rgba(255, 0, 60, 0.4);
+  color: #ff4d6d;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Smooth Fade In */
+@keyframes smoothFade {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tech-info,
+.image-details-box,
+.recommendation-box {
+  animation: smoothFade 0.6s ease forwards;
+}
