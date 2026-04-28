@@ -3,7 +3,7 @@
 
 DeepShield is a deep learning based web application that detects whether an image or video is AI-generated or real.
 
-It uses a fine-tuned MobileNetV2 model trained on real vs AI-generated datasets and provides:
+It uses a fine-tuned MobileNetV2 model trained on real vs AI-generated datasets and provides :
 
 - ✅ AI / Real classification
 - 📊 Confidence percentage meter
