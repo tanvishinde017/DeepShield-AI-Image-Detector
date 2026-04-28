@@ -30,7 +30,7 @@ It uses a fine-tuned MobileNetV2 model trained on real vs AI-generated datasets 
 - React js
 - Axios
 - CSS3
-- Responsive User Interface 
+- Responsive UI
 
 ### Backend
 - Flask
