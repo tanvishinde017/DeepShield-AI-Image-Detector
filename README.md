@@ -1,7 +1,6 @@
 🛡️ DeepShield – AI Image & Video Detection System
 
 DeepShield is a deep learning-powered web application that detects whether an image or video is AI-generated or real.
-
 Built with a modern full-stack architecture, DeepShield combines computer vision, deep learning, and web technologies to provide a fast and intuitive detection system.
 
 🚀 Live Demo
@@ -9,6 +8,8 @@ Built with a modern full-stack architecture, DeepShield combines computer vision
 https://deep-shield-ai-image-detector.vercel.app
 ⚙️ Backend (Render):
 https://deepshield-ai-image-detector-1.onrender.com
+
+
 ✨ Features
 ✅ AI vs Real classification
 📊 Confidence score with probability meter
@@ -16,9 +17,11 @@ https://deepshield-ai-image-detector-1.onrender.com
 🔴 Red → AI Generated
 🟢 Green → Real
 📅 Timestamp of analysis
+
 🎥 Video frame-by-frame analysis
 ⚡ Fast API response with optimized model
 📱 Fully responsive UI
+
 🧠 How It Works
 User uploads an image or video
 Backend preprocesses the media using OpenCV
@@ -28,22 +31,27 @@ Smart threshold logic determines:
 AI Generated
 Real
 Result is returned with confidence score and displayed on UI
+
 🏗️ Tech Stack
+
 🎨 Frontend
 React.js
 Axios
 CSS3
 Responsive Design
+
 ⚙️ Backend
 Flask
 TensorFlow / Keras
 OpenCV
 NumPy
+
 🤖 Model
 MobileNetV2 (Pretrained on ImageNet)
 Transfer Learning
 Fine-tuning
 Data Augmentation
+
 📂 Project Structure
 DeepShield/
 │
