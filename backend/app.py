@@ -13,7 +13,7 @@ from tensorflow import keras
 from fpdf import FPDF
 
 # =========================
-# CONFIG
+# CONFIG paths and constants
 # =========================
 
 MEMORY_PATH = "models/image_memory.json"
@@ -25,7 +25,7 @@ IMG_SIZE = 160
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # =========================
-# INIT APP
+# INIT APP and LOAD resources
 # =========================
 
 app = Flask(__name__)
@@ -33,7 +33,7 @@ CORS(app)
 
 print("\n🛡️ DeepShield AI Backend Starting...\n")
 
-# Load memory
+# Load memory and measure load time
 if not os.path.exists(MEMORY_PATH):
     raise FileNotFoundError("image_memory.json not found.")
 
@@ -42,7 +42,7 @@ with open(MEMORY_PATH, "r") as f:
 
 print(f"✅ Loaded {len(memory)} trained images into memory")
 
-# Load model
+# Load model and measure load time
 print("🔄 Loading AI model...")
 model = keras.models.load_model(MODEL_PATH)
 print("✅ AI Model Loaded Successfully\n")
@@ -53,7 +53,7 @@ if not os.path.exists(HISTORY_PATH):
         json.dump([], f)
 
 # =========================
-# UTIL FUNCTIONS
+# UTIL FUNCTIONS beacuse we want to keep routes clean
 # =========================
 
 def get_image_hash(file):
@@ -107,7 +107,7 @@ def save_history(entry):
         json.dump(history, f, indent=4)
 
 # =========================
-# ROUTES
+# ROUTES and API endpoints
 # =========================
 
 @app.route("/")
@@ -135,7 +135,7 @@ def predict_image():
     file.save(filename)
 
     # =====================
-    # Memory Match First
+    # Memory Match First then AI Prediction
     # =====================
 
     if image_hash in memory:
@@ -144,7 +144,7 @@ def predict_image():
 
     else:
         # =====================
-        # AI Model Prediction
+        # AI Model Prediction of the uploaded image
         # =====================
         processed = preprocess_image(filename)
         prediction = model.predict(processed)[0][0]
@@ -159,7 +159,7 @@ def predict_image():
         confidence = round(confidence, 2)
 
     # =====================
-    # Generate extras
+    # Generate extras like heatmap and PDF report and save history
     # =====================
 
     scan_id = uuid.uuid4().hex[:8].upper()
@@ -186,7 +186,7 @@ def predict_image():
     })
 
 # =========================
-# History API
+# History API to fetch past scan results
 # =========================
 
 @app.route("/api/history", methods=["GET"])
