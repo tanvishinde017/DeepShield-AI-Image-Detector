@@ -20,7 +20,7 @@ It uses a fine-tuned MobileNetV2 model trained on real vs AI-generated datasets 
 2. Backend preprocesses media and recogniase image 
 3. Model predicts probability
 4. Smart threshold logic determines label
-5. Result displayed with confidence meter
+5. Result displayed with confidence meter 
 
 ---
 

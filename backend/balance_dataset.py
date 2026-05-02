@@ -16,10 +16,10 @@ def trim_folder(real_path, fake_path):
         print("Already balanced ✅")
         return
 
-    # Find smaller count
+    # Find smaller count 
     min_count = min(real_count, fake_count)
 
-    # Trim real if needed
+    # Trim real if needed  
     if real_count > min_count:
         extra_real = random.sample(real_images, real_count - min_count)
         for img in extra_real:
