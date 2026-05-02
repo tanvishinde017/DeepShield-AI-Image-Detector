@@ -1,3 +1,54 @@
+
+
+# 🛡️ DeepShield – AI Image & Video Detection System
+
+DeepShield is a deep learning based web application that detects whether an image or video is AI-generated or real . 
+
+It uses a fine-tuned MobileNetV2 model trained on real vs AI-generated datasets and provides security in  :
+
+- ✅ AI / Real classification
+- 📊 Confidence percentage meter
+- 🎨 Red (AI) / Green (Real) result indication
+- 📅 Date & time of analysis
+- 🎥 Video frame analysis support
+- 🚀 Modern React frontend + Flask backend
+
+---
+
+## 🧠 How It Works 
+
+1. User uploads image or video
+2. Backend preprocesses media and recogniase image 
+3. Model predicts probability
+4. Smart threshold logic determines label
+5. Result displayed with confidence meter 
+
+---
+
+## 🏗️ Tech Stack
+
+### Frontend
+- React js
+- Axios
+- CSS3
+- Responsive UI
+
+### Backend
+- Flask
+- TensorFlow / Keras
+- OpenCV
+- NumPy
+
+### Model
+- MobileNetV2 (Pretrained on ImageNet)
+- Transfer Learning + Fine Tuning
+- Data Augmentation
+
+---
+
+## 📂 Project Structure ani overview
+
+=======
 🛡️ DeepShield – AI Image & Video Detection System
 
 DeepShield is a deep learning-powered web application that detects whether an image or video is AI-generated or real .
@@ -53,6 +104,7 @@ Fine-tuning
 Data Augmentation
 
 📂 Project Structure
+
 DeepShield/
 │
 ├── backend/

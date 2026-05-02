@@ -13,7 +13,7 @@ from tensorflow import keras
 from fpdf import FPDF
 
 # =========================
-# CONFIG paths and constants
+# CONFIG paths and constants 
 # =========================
 
 MEMORY_PATH = "models/image_memory.json"
